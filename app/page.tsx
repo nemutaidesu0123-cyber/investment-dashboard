@@ -2,7 +2,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Price, pricesToChartData } from "../src/lib/price"
+import { calculateStats, Price, pricesToChartData } from "../src/lib/price"
 
 import {
   LineChart,
@@ -25,6 +25,8 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null)
   const [inputValue, setInputValue] = useState("")
   const [candidates, setCandidates] = useState<StockSearchResult[]>([])
+  // 統計を計算
+  const stats = calculateStats(prices)
 
   useEffect(() => {
     // 入力が止まってから500ms後に実行
@@ -75,7 +77,7 @@ export default function Home() {
         setLoading(false)
       })
   }, [timeframe, symbol]) // symbolも依存配列に追加
-
+  // チャート用データに変換
   const chartData = pricesToChartData(prices)
 
   return (
@@ -120,7 +122,7 @@ export default function Home() {
                   cursor: 'pointer',
                   borderBottom: '1px solid #000000',
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f0f0'}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#05ff6d'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
               >
                 <strong>{item.symbol}</strong> - {item.name}
@@ -150,7 +152,7 @@ export default function Home() {
             onChange={() => setTimeframe("weekly")}
             disabled={loading}
           />
-          週足 (過去15週)
+          週足 (過去20週)
         </label>
 
         <label>
@@ -161,7 +163,7 @@ export default function Home() {
             onChange={() => setTimeframe("monthly")}
             disabled={loading}
           />
-          月足 (過去3ヶ月)
+          月足 (過去6ヶ月)
         </label>
       </div>
 
@@ -188,6 +190,16 @@ export default function Home() {
       
       {!loading && !error && chartData.length === 0 && (
         <p>データがありません</p>
+      )}
+        
+      {/* 統計情報（新規） */}
+      {stats && (
+        <div style={{ marginTop: 20, padding: 20, backgroundColor: '#f5f5f5' }}>
+          <h3 style={{ fontSize: '18px', marginBottom: '8px' }}>過去100日間の統計</h3>
+          <p style={{marginLeft: '8px' }}>最高価格: ${stats.maxPrice.toFixed(2)} ({stats.maxPriceDate})</p>
+          <p style={{marginLeft: '8px' }}>最安価格: ${stats.minPrice.toFixed(2)} ({stats.minPriceDate})</p>
+          <p style={{marginLeft: '8px' }}>変動幅: ${stats.priceRange.toFixed(2)} ({stats.priceRangePercent.toFixed(2)}%)</p>
+        </div>
       )}
     </main>
   )

@@ -18,15 +18,18 @@ type AlphaVantageResponse = {
   "Error Message"?: string
   "Note"?: string // レート制限のメッセージ
 }
-
+// カスタムエラークラス
 export class PriceApiError extends Error {
+  // エラーコードをオプションで追加
   constructor(message: string, public code?: string) {
     super(message)
     this.name = "PriceApiError"
   }
 }
 
+// 日足データを取得する非同期関数
 export async function fetchDailyPrices(symbol: string): Promise<Price[]> {
+  // APIキーの存在チェック
   if (!API_KEY) {
     throw new PriceApiError("API key is not configured")
   }
@@ -38,8 +41,10 @@ export async function fetchDailyPrices(symbol: string): Promise<Price[]> {
     `&apikey=${API_KEY}`
 
   try {
+    // APIリクエストを送信
     const res = await fetch(url)
     
+    // HTTPステータスコードのチェック
     if (!res.ok) {
       throw new PriceApiError(
         `HTTP error: ${res.status} ${res.statusText}`,
@@ -47,6 +52,7 @@ export async function fetchDailyPrices(symbol: string): Promise<Price[]> {
       )
     }
 
+    // レスポンスをJSON形式で解析
     const json: AlphaVantageResponse = await res.json()
 
     // エラーメッセージのチェック
@@ -65,8 +71,10 @@ export async function fetchDailyPrices(symbol: string): Promise<Price[]> {
       )
     }
 
+    // 日足データの取得
     const series = json["Time Series (Daily)"]
     
+    // データが存在しない場合のエラーハンドリング
     if (!series) {
       throw new PriceApiError(
         `No data available for symbol: ${symbol}`,
@@ -74,18 +82,21 @@ export async function fetchDailyPrices(symbol: string): Promise<Price[]> {
       )
     }
 
+    // 価格データの配列を作成
+    // Object.keys(series)で日付の配列を取得し、日付ごとにmapでPriceオブジェクトに変換
     const prices: Price[] = Object.keys(series).map((date) => ({
       symbol,
       date,
-      price: Number(series[date]["4. close"]),
+      price: Number(series[date]["4. close"]), // その日の終値をNmber型に変換して使用
     }))
-
+    // 作成した価格データの配列を返す
     return prices
   } catch (error) {
+    // 既にPriceApiErrorの場合はそのままスロー
     if (error instanceof PriceApiError) {
       throw error
     }
-    
+    // その他のエラーはFETCH_ERRORとしてラップしてスロー
     throw new PriceApiError(
       `Failed to fetch prices: ${error instanceof Error ? error.message : String(error)}`,
       "FETCH_ERROR"
