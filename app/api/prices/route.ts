@@ -1,6 +1,6 @@
 // app/api/prices/route.ts
 import { NextRequest, NextResponse } from "next/server"
-import { fetchDailyPrices, PriceApiError } from "@/src/lib/priceApi"
+import { fetchDailyPrices, YahooFinanceError } from '@/src/lib/yahooFinanceApi'
 import { Price, toMonthly, toWeekly } from "@/src/lib/price"
 
 type IntradayInterval = "1min" | "5min" | "15min" | "30min" | "60min"
@@ -23,46 +23,34 @@ export async function GET(request: NextRequest) {
   try {
     console.log(`Fetching prices for ${symbol}...`)
     
-    // 期間でフィルタリング
-    const fromDate = calcFromDate(timeframe)
-    console.log(`Filtering from date: ${fromDate.toISOString()}`)
+    const allPrices = await fetchDailyPrices(symbol)
+    console.log(`📊 Total prices: ${allPrices.length}`)
+
     // timeframeごとに変換
     let result: Price[]
-    
-    // if (intradayIntervals.includes(timeframe)) {
-      // 分足の場合の処理（有料のためコメントアウト）
-      // result = await fetchIntraDayPrices(symbol, timeframe as IntradayInterval)
-    // } else {
-      const allPrices = await fetchDailyPrices(symbol)
-      console.log(`Received ${allPrices.length} prices`)
-      const filteredPrices = allPrices.filter((p) => {
-        return new Date(p.date) >= fromDate
-      })
-      console.log(`After filtering: ${filteredPrices.length} prices`)
-      switch (timeframe) {
-        case "weekly":
-          result = toWeekly(filteredPrices)
-          console.log(`After weekly conversion: ${result.length} prices`)
-          break
-        case "monthly":
-          result = toMonthly(filteredPrices)
-          console.log(`After monthly conversion: ${result.length} prices`)
-          break
-        default:
-          result = filteredPrices
-      }
-   // } 
+    switch (timeframe) {
+      case "weekly":
+        result = toWeekly(allPrices)
+        console.log(`📈 Weekly points: ${result.length}`)
+        break
+      case "monthly":
+        result = toMonthly(allPrices)
+        console.log(`📈 Monthly points: ${result.length}`)
+        break
+      default:
+        result = allPrices
+    }
 
     return NextResponse.json(result)
   } catch (error) {
-    console.error("API Error:", error)
-    
-    if (error instanceof PriceApiError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.code === "RATE_LIMIT" ? 429 : 400 }
-      )
-    }
+      console.error("API Error:", error)
+      
+      if (error instanceof YahooFinanceError) {
+        return NextResponse.json(
+          { error: error.message, code: error.code },
+          { status: error.code === "RATE_LIMIT" ? 429 : 400 }
+        )
+      }
     
     return NextResponse.json(
       { error: "Internal server error", details: String(error) },

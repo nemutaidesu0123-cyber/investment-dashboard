@@ -76,6 +76,7 @@ export async function fetchDailyPrices(symbol: string): Promise<Price[]> {
     
     // データが存在しない場合のエラーハンドリング
     if (!series) {
+      console.log("❌ json content:", json) 
       throw new PriceApiError(
         `No data available for symbol: ${symbol}`,
         "NO_DATA"

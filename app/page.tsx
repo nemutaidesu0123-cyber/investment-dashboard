@@ -17,6 +17,24 @@ import { StockSearchResult } from "@/src/lib/searchApi"
 
 type Timeframe = "1min" | "5min" | "15min" | "30min" | "60min" | "daily" | "weekly" | "monthly"
 
+type SectorRankings = {
+  lastUpdated: string
+  rankings: {
+    "1day": {
+      rising: Array<{ sector: string, change: number }>
+      falling: Array<{ sector: string, change: number }>
+    }
+    "1week": {
+      rising: Array<{ sector: string, change: number }>
+      falling: Array<{ sector: string, change: number }>
+    }
+    "1month": {
+      rising: Array<{ sector: string, change: number }>
+      falling: Array<{ sector: string, change: number }>
+    }
+  }
+}
+
 export default function Home() {
   const [prices, setPrices] = useState<Price[]>([])
   const [timeframe, setTimeframe] = useState<Timeframe>("daily") 
@@ -25,8 +43,17 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null)
   const [inputValue, setInputValue] = useState("")
   const [candidates, setCandidates] = useState<StockSearchResult[]>([])
+  const [sectorData, setSectorData] = useState<SectorRankings | null>(null)
   // 統計を計算
   const stats = calculateStats(prices)
+
+    // セクターデータ読み込み
+  useEffect(() => {
+    fetch('/sector-data.json')
+      .then(res => res.json())
+      .then(data => setSectorData(data))
+      .catch(err => console.error('セクターデータ読み込みエラー:', err))
+  }, [])
 
   useEffect(() => {
     // 入力が止まってから500ms後に実行
@@ -199,6 +226,80 @@ export default function Home() {
           <p style={{marginLeft: '8px' }}>最高価格: ${stats.maxPrice.toFixed(2)} ({stats.maxPriceDate})</p>
           <p style={{marginLeft: '8px' }}>最安価格: ${stats.minPrice.toFixed(2)} ({stats.minPriceDate})</p>
           <p style={{marginLeft: '8px' }}>変動幅: ${stats.priceRange.toFixed(2)} ({stats.priceRangePercent.toFixed(2)}%)</p>
+        </div>
+      )}
+
+      {sectorData && (
+        <div style={{ marginTop: 40 }}>
+          <h2>セクターランキング</h2>
+          <p style={{ fontSize: 12, color: '#666' }}>
+            最終更新: {new Date(sectorData.lastUpdated).toLocaleString('ja-JP')}
+          </p>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+            {/* 1日前比 */}
+            <div>
+              <h3>1日前比</h3>
+              <h4 style={{ color: 'green' }}>上昇TOP5</h4>
+              <ul>
+                {sectorData.rankings["1day"].rising.map((item, i) => (
+                  <li key={i}>
+                    {item.sector}: <span style={{ color: 'green' }}>+{item.change.toFixed(2)}%</span>
+                  </li>
+                ))}
+              </ul>
+              <h4 style={{ color: 'red' }}>下落TOP5</h4>
+              <ul>
+                {sectorData.rankings["1day"].falling.map((item, i) => (
+                  <li key={i}>
+                    {item.sector}: <span style={{ color: 'red' }}>{item.change.toFixed(2)}%</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* 1週間前比 */}
+            <div>
+              <h3>1週間前比</h3>
+              <h4 style={{ color: 'green' }}>上昇TOP5</h4>
+              <ul>
+                {sectorData.rankings["1week"].rising.map((item, i) => (
+                  <li key={i}>
+                    {item.sector}: <span style={{ color: 'green' }}>+{item.change.toFixed(2)}%</span>
+                  </li>
+                ))}
+              </ul>
+              <h4 style={{ color: 'red' }}>下落TOP5</h4>
+              <ul>
+                {sectorData.rankings["1week"].falling.map((item, i) => (
+                  <li key={i}>
+                    {item.sector}: <span style={{ color: 'red' }}>{item.change.toFixed(2)}%</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* 1ヶ月前比 */}
+            <div>
+              <h3>1ヶ月前比</h3>
+              <h4 style={{ color: 'green' }}>上昇TOP5</h4>
+              <ul>
+                {sectorData.rankings["1month"].rising.map((item, i) => (
+                  <li key={i}>
+                    {item.sector}: <span style={{ color: 'green' }}>+{item.change.toFixed(2)}%</span>
+                  </li>
+                ))}
+              </ul>
+              <h4 style={{ color: 'red' }}>下落TOP5</h4>
+              <ul>
+                {sectorData.rankings["1month"].falling.map((item, i) => (
+                  <li key={i}>
+                    {item.sector}: <span style={{ color: 'red' }}>{item.change.toFixed(2)}%</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
       )}
     </main>
