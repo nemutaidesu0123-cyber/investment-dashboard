@@ -1,0 +1,32 @@
+name: Update Sector Data
+
+on:
+  schedule:
+    - cron: '0 22 * * *'  # 毎日22:00 UTC = 日本時間 翌朝7:00
+  workflow_dispatch:  # 手動実行ボタン
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Update sector data
+        run: npm run update-sectors
+      
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/sector-data.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: update sector data [skip ci]" && git push)
