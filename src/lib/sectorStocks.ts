@@ -17,6 +17,7 @@ export const SECTOR_STOCKS: { [sector: string]: string[] } = {
     "CRWD",  // CrowdStrike
     "IREN",  // Iris Energy 
     "NBIS",  // Nebius
+    "SMCI"  // Super Micro Computer
   ],
 
   "半導体": [
@@ -53,6 +54,7 @@ export const SECTOR_STOCKS: { [sector: string]: string[] } = {
     "PNC",   // PNC Financial
     "AXP",   // American Express
     "V",     // Visa
+    "SOFI",  // SoFi Technologies
   ],
 
   "ヘルスケア・製薬": [
@@ -70,6 +72,7 @@ export const SECTOR_STOCKS: { [sector: string]: string[] } = {
     "EOG",   // EOG Resources
     "SMR",
     "OKLO",  
+    "CCJ",   // Cameco (原子力)
   ],
 
   "消費財・小売": [
@@ -92,6 +95,7 @@ export const SECTOR_STOCKS: { [sector: string]: string[] } = {
     "FOXA",  // Fox Corporation
     "SPOT",  // Spotify
     "EA",    // Electronic Arts
+    "TTWO",  // Take-Two Interactive
   ],
 
   "航空宇宙・防衛": [
@@ -105,6 +109,8 @@ export const SECTOR_STOCKS: { [sector: string]: string[] } = {
     "MRNA",  // Moderna
     "BNTX",  // BioNTech
     "CRSP",  // CRISPR Therapeutics
+    "VKTX",  // Vektor Therapeutics
+    "CYTK",  // Cytokinetics
   ],
 
   "鉱山・資源": [

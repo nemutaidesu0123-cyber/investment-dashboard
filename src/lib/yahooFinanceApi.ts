@@ -14,7 +14,7 @@ export async function fetchDailyPrices(symbol: string): Promise<Price[]> {
   try {
     const now = new Date()
     const past = new Date()
-    past.setDate(past.getDate() - 100)
+    past.setFullYear(past.getFullYear() - 3) // 5 years ago
 
     const result: any = await yf.historical(symbol, {
       period1: past,

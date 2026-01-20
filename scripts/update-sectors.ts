@@ -179,7 +179,7 @@ async function main() {
         
         // レート制限対策
         if (i < uniqueSymbols.length - 1) {
-            await sleep(20000)  // 20秒待つ
+            await sleep(2000)  // 20秒待つ
         }
     }
     
