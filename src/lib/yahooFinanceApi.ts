@@ -4,6 +4,16 @@ import { Price } from "./price"
 
 const yahooFinance = new YahooFinance()
 
+// タイムアウト付きPromiseラッパー
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number = 10000): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Request timed out after ${timeoutMs}ms`)), timeoutMs)
+    ),
+  ]);
+}
+
 // カスタムエラークラス
 export class YahooFinanceError extends Error {
   constructor(message: string, public code?: string) {
@@ -63,11 +73,13 @@ export async function searchSymbols(
   try {
     console.log("🔍 Searching for:", keywords)
 
-    const results: any = await yahooFinance.search(keywords, {
-      quotesCount: 10,
-      newsCount: 0,
-    })
-
+    const results: any = await withTimeout(
+      yahooFinance.search(keywords, {
+        quotesCount: 10,
+        newsCount: 0,
+      }),
+      8000 // 8秒タイムアウト
+    )
     console.log("✅ Search results:", results.quotes?.length || 0)
 
     // 検索結果を整形して返す
@@ -98,11 +110,14 @@ export async function fetchDailyPrices(symbol: string): Promise<Price[]> {
     const past = new Date()
     past.setFullYear(past.getFullYear() - 3)
 
-    const result: any = await yahooFinance.historical(symbol, {
-      period1: past,
-      period2: now,
-      interval: "1d",
-    })
+    const result: any = await withTimeout(
+      yahooFinance.historical(symbol, {
+        period1: past,
+        period2: now,
+        interval: "1d",
+      }),
+      15000 // 15秒タイムアウト
+    )
 
     if (!result || result.length === 0) {
       throw new YahooFinanceError(
@@ -139,9 +154,19 @@ export async function fetchStockStats(symbol: string): Promise<StockStats> {
   try {
     console.log(`📈 Fetching stats for ${symbol}`)
 
-    const quote: any = await yahooFinance.quoteSummary(symbol, {
-      modules: ["financialData", "defaultKeyStatistics", "summaryDetail"],
-    })
+    const quote: any = await withTimeout(
+      yahooFinance.quoteSummary(symbol, {
+        modules: ["financialData", "defaultKeyStatistics", "summaryDetail"],
+      }),
+      15000 // 15秒タイムアウト
+    )
+
+    if (!quote) {
+      throw new YahooFinanceError(
+        `No quote data available for ${symbol}`,
+        "NO_DATA"
+      )
+    }
 
     console.log('🔍 Available fields:')
     console.log('financialData keys:', Object.keys(quote.financialData || {}))

@@ -120,6 +120,9 @@ export default function Home() {
   const [candidates, setCandidates] = useState<StockSearchResult[]>([])
   const [sectorData, setSectorData] = useState<SectorRankings | null>(null)
   const [data, setData] = useState<ScreeningData | null>(null);
+  // エラーハンドリング
+  const [screeningError, setScreeningError] = useState<string | null>(null)
+  const [screeningLoading, setScreeningLoading] = useState(false)
 
   // 統計を計算
   const stats = calculateStats(prices)
@@ -166,12 +169,13 @@ export default function Home() {
     fetch(`/api/prices?symbol=${symbol}&timeframe=${timeframe}`)
       .then((res) => {
         if (!res.ok) {
-          throw new Error(`HTTP error: ${res.status}`)
+          throw new Error(`価格データの取得に失敗しました (ステータス: ${res.status})`)
         }
         return res.json()
       })
       .then((data: Price[]) => {
         setPrices(data)
+        setError(null)
       })
       .catch((err) => {
         console.error("Failed to fetch prices:", err)
@@ -185,27 +189,50 @@ export default function Home() {
   // チャート用データに変換
   const chartData = pricesToChartData(prices)
 
-// useEffectでデータ取得する部分（型を更新）
-useEffect(() => {
-  if (!symbol) return;
+  // スクリーニングデータ取得のuseEffect（エラーハンドリング強化）
+  useEffect(() => {
+    if (!symbol) return
 
-  console.log('🔍 Fetching screening data for:', symbol);
-  const fetchScreeningData = async () => {
-    try {
-      const url = `/api/screen?symbol=${symbol}`;
-      console.log('📡 Request URL:', url);
-      const response = await fetch(url);
-      console.log('📥 Response status:', response.status);
-      const result: ScreeningData = await response.json();
-      console.log('✅ Fetched screening data for', symbol, ':', result);
-      setData(result);
-    } catch (error) {
-      console.error('❌ Error fetching screening data:', error);
+    console.log('🔍 Fetching screening data for:', symbol)
+    setScreeningLoading(true)
+    setScreeningError(null)
+    
+    const fetchScreeningData = async () => {
+      try {
+        const url = `/api/screen?symbol=${symbol}`
+        console.log('📡 Request URL:', url)
+        
+        const response = await fetch(url)
+        console.log('📥 Response status:', response.status)
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+          throw new Error(errorData.error || `スクリーニングデータの取得に失敗しました (${response.status})`)
+        }
+        
+        const result: ScreeningData = await response.json()
+        
+        // データの整合性チェック
+        if (!result.screeningResults || !result.actualValues) {
+          throw new Error('不完全なデータを受信しました')
+        }
+        
+        console.log('✅ Fetched screening data for', symbol, ':', result)
+        setData(result)
+        setScreeningError(null)
+      } catch (error) {
+        console.error('❌ Error fetching screening data:', error)
+        setScreeningError(error instanceof Error ? error.message : 'データの取得に失敗しました')
+        setData(null)
+      } finally {
+        setScreeningLoading(false)
+      }
     }
-  };
 
-  fetchScreeningData();
-}, [symbol]);
+    // 少し遅延を入れることでAPIレート制限を回避
+    const timer = setTimeout(fetchScreeningData, 300)
+    return () => clearTimeout(timer)
+  }, [symbol])
 
   return (
     <div style={{
@@ -375,7 +402,22 @@ useEffect(() => {
           </h2>
 
           {loading && <p style={{ textAlign: 'center', color: '#667eea' }}>読み込み中...</p>}
-          {error && <p style={{ color: '#e74c3c', textAlign: 'center' }}>{error}</p>}
+          {error && (
+            <div style={{
+              padding: '20px',
+              background: '#ffebee',
+              borderLeft: '4px solid #e74c3c',
+              borderRadius: '8px',
+              color: '#c62828',
+              marginBottom: '20px',
+            }}>
+              <strong>⚠️ エラー:</strong> {error}
+              <div style={{ fontSize: '13px', marginTop: '8px', color: '#666' }}>
+                しばらく待ってから再度お試しください。
+              </div>
+            </div>
+          )}
+
           
           {!loading && !error && chartData.length > 0 && (
             <ResponsiveContainer width="100%" height={400}>
@@ -407,7 +449,7 @@ useEffect(() => {
           )}
 
           {/* 統計情報 */}
-          {stats && (
+          {stats && !error && (
             <div style={{
               marginTop: '24px',
               padding: '20px',
@@ -451,7 +493,81 @@ useEffect(() => {
         </div>
 
         {/* スクリーニング結果セクション */}
-        {data && (
+        {screeningLoading && (
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: '20px',
+            padding: '40px',
+            textAlign: 'center',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+          }}>
+            <div style={{ fontSize: '18px', color: '#667eea', marginBottom: '12px' }}>
+              🔍 財務データを分析中...
+            </div>
+            <div style={{ fontSize: '14px', color: '#999' }}>
+              数秒お待ちください
+            </div>
+          </div>
+        )}
+
+        {screeningError && (
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: '20px',
+            padding: '24px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+          }}>
+            <div style={{
+              padding: '20px',
+              background: '#ffebee',
+              borderLeft: '4px solid #e74c3c',
+              borderRadius: '8px',
+            }}>
+              <div style={{ color: '#c62828', fontSize: '16px', fontWeight: 600, marginBottom: '8px' }}>
+                ⚠️ スクリーニングデータの取得に失敗しました
+              </div>
+              <div style={{ color: '#666', fontSize: '14px', marginBottom: '12px' }}>
+                {screeningError}
+              </div>
+              <div style={{ fontSize: '13px', color: '#999' }}>
+                考えられる原因：
+                <ul style={{ marginTop: '8px', paddingLeft: '20px' }}>
+                  <li>Yahoo Finance APIのレート制限（1分待ってから再試行してください）</li>
+                  <li>該当銘柄のデータが不完全</li>
+                  <li>ネットワーク接続の問題</li>
+                </ul>
+              </div>
+              <button
+                onClick={() => {
+                  setScreeningError(null)
+                  // symbolを再設定してuseEffectを再実行
+                  const currentSymbol = symbol
+                  setSymbol('')
+                  setTimeout(() => setSymbol(currentSymbol), 100)
+                }}
+                style={{
+                  marginTop: '16px',
+                  padding: '10px 20px',
+                  background: '#667eea',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = '#5568d3'}
+                onMouseLeave={(e) => e.currentTarget.style.background = '#667eea'}
+              >
+                🔄 再試行
+              </button>
+            </div>
+          </div>
+        )}
+
+        {data && !screeningLoading && !screeningError && (
           <>
             {/* 既存のスクリーニング結果テーブル */}
             <div style={{
@@ -469,6 +585,7 @@ useEffect(() => {
               }}>
                 ✅ 財務指標スクリーニング
               </h2>
+              {data.screeningResults && data.actualValues ? (
               <table style={{
                 width: '100%',
                 borderCollapse: 'collapse',
@@ -575,7 +692,15 @@ useEffect(() => {
                     )
                   })}
                 </tbody>
-              </table>
+              </table> ): (
+                <div style={{
+                  padding: '20px',
+                  textAlign: 'center',
+                  color: '#999',
+                }}>
+                  データの表示に失敗しました
+                </div>
+              )}
             </div>
 
             {/* 総合判定セクション */}

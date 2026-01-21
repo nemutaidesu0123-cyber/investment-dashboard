@@ -190,24 +190,38 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Fetch price data
-    const prices = await fetchDailyPrices(symbol);
-    const maxPrice = Math.max(...prices.map((p) => p.price));
-    const minPrice = Math.min(...prices.map((p) => p.price));
+    console.log(`🔍 Fetching all data for ${symbol} in parallel...`);
+
+    // 並列実行（でもyahoo-finance2が内部で制限してくれる）
+    const [prices, stats, revenueData] = await Promise.allSettled([
+      fetchDailyPrices(symbol),
+      fetchStockStats(symbol),
+      // quoteSummaryを1回だけ呼んで財務データも売上データも取得
+      fetchFinancialDataOptimized(symbol)
+    ]);
+
+    // エラーハンドリング
+    if (prices.status === 'rejected') {
+      throw new Error(`価格データ取得失敗: ${prices.reason}`);
+    }
+    if (stats.status === 'rejected') {
+      throw new Error(`財務データ取得失敗: ${stats.reason}`);
+    }
+
+    const pricesValue = prices.value;
+    const maxPrice = Math.max(...pricesValue.map((p) => p.price));
+    const minPrice = Math.min(...pricesValue.map((p) => p.price));
     const volatility = (((maxPrice - minPrice) / minPrice) * 100).toFixed(2);
 
-    // Fetch real financial data
-    const stats = await fetchStockStats(symbol);
+    const statsValue = stats.value;
     
-    const stockStats = [{
-      ...stats,
-    }];
+    // 売上成長率はオプショナル（失敗しても続行）
+    const revenueGrowth = revenueData.status === 'fulfilled' 
+      ? revenueData.value 
+      : null;
 
-    console.log('📊 Stock stats for', symbol, ':', stockStats[0]);
-
-    const screeningResultsArray = screenStocks(stockStats);
-    
-    // ScreeningResult型をRecord<string, string>に変換
+    // 以降は既存のロジック...
+    const screeningResultsArray = screenStocks([statsValue]);
     const screeningResults: Record<string, string> = {
       marketCap: screeningResultsArray[0].marketCap,
       roe: screeningResultsArray[0].roe,
@@ -221,37 +235,21 @@ export async function GET(request: Request) {
       eps: screeningResultsArray[0].eps,
     };
 
-    // 実際の値を計算
     const actualValues = {
-      roe: stats.returnOnEquity,
-      psr: stats.marketCap / stats.revenue,
-      cashRich: (stats.totalCash / stats.marketCap) * 100,
-      positiveCF: (stats.operatingCashflow / stats.marketCap) * 100,
-      per: stats.per,
-      pbr: stats.pbr,
-      roa: stats.roa,
-      equityRatio: stats.equityRatio,
-      eps: stats.eps,
-      marketCap: stats.marketCap, // 時価総額を追加
+      roe: statsValue.returnOnEquity || 0,
+      psr: statsValue.revenue > 0 ? statsValue.marketCap / statsValue.revenue : 0,
+      cashRich: statsValue.marketCap > 0 ? (statsValue.totalCash / statsValue.marketCap) * 100 : 0,
+      positiveCF: statsValue.marketCap > 0 ? (statsValue.operatingCashflow / statsValue.marketCap) * 100 : 0,
+      per: statsValue.per || 0,
+      pbr: statsValue.pbr || 0,
+      roa: statsValue.roa || 0,
+      equityRatio: statsValue.equityRatio || 0,
+      eps: statsValue.eps || 0,
+      marketCap: statsValue.marketCap || 0,
     };
 
-    console.log('📈 Actual values:', actualValues);
-
-    // 売上成長率を計算
-    const revenueGrowth = await calculateRevenueCAGR(symbol);
-
-    // 長期保有適性を判定
-    const longTermSuitability = evaluateLongTermSuitability(
-      screeningResults,
-      actualValues
-    );
-
-    // テンバガー適性を判定
-    const tenbaggerPotential = evaluateTenbaggerPotential(
-      actualValues,
-      screeningResults,
-      revenueGrowth
-    );
+    const longTermSuitability = evaluateLongTermSuitability(screeningResults, actualValues);
+    const tenbaggerPotential = evaluateTenbaggerPotential(actualValues, screeningResults, revenueGrowth);
 
     return NextResponse.json({
       maxPrice,
@@ -263,7 +261,60 @@ export async function GET(request: Request) {
       tenbaggerPotential,
     });
   } catch (error) {
-    console.error('❌ Error fetching screening data:', error);
-    return NextResponse.json({ error: (error as any).message }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('❌ Error in /api/screen:', errorMessage);
+    
+    return NextResponse.json(
+      { 
+        error: errorMessage,
+        details: 'Yahoo Finance APIへのアクセスに失敗しました。しばらく待ってから再試行してください。'
+      },
+      { status: 500 }
+    );
   }
+}
+
+// 最適化：quoteSummaryを1回だけ呼んで全部取得
+async function fetchFinancialDataOptimized(symbol: string) {
+  const yahooFinance = (await import('yahoo-finance2')).default;
+  
+  // 1回のAPIコールで複数モジュールを取得
+  const data = await yahooFinance.quoteSummary(symbol, {
+    modules: [
+      'financialData',
+      'defaultKeyStatistics', 
+      'summaryDetail',
+      'incomeStatementHistory' // 売上成長率もここで取得
+    ]
+  }) as any;
+  
+  // 売上成長率を計算
+  const incomeStatements = data?.incomeStatementHistory?.incomeStatementHistory;
+  let revenueGrowth = null;
+  
+  if (incomeStatements && incomeStatements.length >= 2) {
+    const sorted = [...incomeStatements].sort((a, b) => 
+      new Date(a.endDate).getTime() - new Date(b.endDate).getTime()
+    );
+    
+    const oldestRevenue = sorted[0].totalRevenue;
+    const latestRevenue = sorted[sorted.length - 1].totalRevenue;
+    const years = sorted.length - 1;
+    
+    if (oldestRevenue > 0 && latestRevenue > 0) {
+      const cagr = (Math.pow(latestRevenue / oldestRevenue, 1 / years) - 1) * 100;
+      
+      let recentGrowth = 0;
+      if (sorted.length >= 2) {
+        const previousRevenue = sorted[sorted.length - 2].totalRevenue;
+        if (previousRevenue > 0) {
+          recentGrowth = ((latestRevenue - previousRevenue) / previousRevenue) * 100;
+        }
+      }
+      
+      revenueGrowth = { cagr, recentGrowth };
+    }
+  }
+  
+  return revenueGrowth;
 }
