@@ -35,6 +35,81 @@ type SectorRankings = {
   }
 }
 
+// スクリーニング条件の日本語ラベルと評価基準（時価総額を追加）
+const screeningLabels: Record<string, { 
+  label: string; 
+  unit: string;
+  criteria: string;
+}> = {
+  marketCap: {
+    label: '時価総額',
+    unit: 'B',
+    criteria: '◎100-500億 ○50-1000億 △10-50億 ×範囲外'
+  },
+  roe: {
+    label: 'ROE（自己資本利益率）',
+    unit: '%',
+    criteria: '◎15%超 ○10%超 △5%超 ×5%以下'
+  },
+  psr: {
+    label: 'PSR（株価売上高倍率）',
+    unit: '倍',
+    criteria: '◎1倍未満 ○2倍未満 △3倍未満 ×3倍以上'
+  },
+  cashRich: {
+    label: 'キャッシュリッチ度',
+    unit: '%',
+    criteria: '◎50%超 ○20%超 △10%超 ×10%以下'
+  },
+  positiveCF: {
+    label: '営業キャッシュフロー',
+    unit: '%',
+    criteria: '◎プラス ○-10%以内 △-20%以内 ×-20%超'
+  },
+  per: {
+    label: 'PER（株価収益率）',
+    unit: '倍',
+    criteria: '◎15倍以下 ○20倍以下 △30倍以下 ×30倍超'
+  },
+  pbr: {
+    label: 'PBR（株価純資産倍率）',
+    unit: '倍',
+    criteria: '◎1倍未満 ○2倍未満 △3倍未満 ×3倍以上'
+  },
+  roa: {
+    label: 'ROA（総資産利益率）',
+    unit: '%',
+    criteria: '◎5%以上 ○3%以上 △1%以上 ×1%未満'
+  },
+  equityRatio: {
+    label: '自己資本比率',
+    unit: '%',
+    criteria: '◎60%以上 ○40%以上 △20%以上 ×20%未満'
+  },
+  eps: {
+    label: 'EPS（1株当たり利益）',
+    unit: 'ドル',
+    criteria: '◎1ドル以上 ○0.5ドル以上 △0.1ドル以上 ×0.1ドル未満'
+  }
+}
+
+// データの型定義（完全版）
+interface ScreeningData {
+  maxPrice: number;
+  minPrice: number;
+  volatility: string;
+  screeningResults: Record<string, string>;
+  actualValues: Record<string, number>;
+  longTermSuitability: string;
+  tenbaggerPotential: {
+    rating: string;
+    score: number;
+    details: string[];
+  };
+}
+
+
+
 export default function Home() {
   const [prices, setPrices] = useState<Price[]>([])
   const [timeframe, setTimeframe] = useState<Timeframe>("daily") 
@@ -44,10 +119,12 @@ export default function Home() {
   const [inputValue, setInputValue] = useState("")
   const [candidates, setCandidates] = useState<StockSearchResult[]>([])
   const [sectorData, setSectorData] = useState<SectorRankings | null>(null)
+  const [data, setData] = useState<ScreeningData | null>(null);
+
   // 統計を計算
   const stats = calculateStats(prices)
 
-    // セクターデータ読み込み
+  // セクターデータ読み込み
   useEffect(() => {
     fetch('/sector-data.json')
       .then(res => res.json())
@@ -71,11 +148,11 @@ export default function Home() {
       })
     }, 500)
 
-    // クリーンアップ（次の入力があったらキャンセル）
+    // クリーンアップ(次の入力があったらキャンセル)
     return () => clearTimeout(timer)
   }, [inputValue])
 
-    // 候補を選択
+  // 候補を選択
   const handleSelect = (item: StockSearchResult) => {
     setSymbol(item.symbol)
     setInputValue(item.symbol)
@@ -104,8 +181,31 @@ export default function Home() {
         setLoading(false)
       })
   }, [timeframe, symbol]) // symbolも依存配列に追加
+
   // チャート用データに変換
   const chartData = pricesToChartData(prices)
+
+// useEffectでデータ取得する部分（型を更新）
+useEffect(() => {
+  if (!symbol) return;
+
+  console.log('🔍 Fetching screening data for:', symbol);
+  const fetchScreeningData = async () => {
+    try {
+      const url = `/api/screen?symbol=${symbol}`;
+      console.log('📡 Request URL:', url);
+      const response = await fetch(url);
+      console.log('📥 Response status:', response.status);
+      const result: ScreeningData = await response.json();
+      console.log('✅ Fetched screening data for', symbol, ':', result);
+      setData(result);
+    } catch (error) {
+      console.error('❌ Error fetching screening data:', error);
+    }
+  };
+
+  fetchScreeningData();
+}, [symbol]);
 
   return (
     <div style={{
@@ -349,6 +449,287 @@ export default function Home() {
             </div>
           )}
         </div>
+
+        {/* スクリーニング結果セクション */}
+        {data && (
+          <>
+            {/* 既存のスクリーニング結果テーブル */}
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: '20px',
+              padding: '24px',
+              marginBottom: '20px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+            }}>
+              <h2 style={{
+                fontSize: 'clamp(20px, 4vw, 28px)',
+                marginBottom: '20px',
+                color: '#333',
+              }}>
+                ✅ 財務指標スクリーニング
+              </h2>
+              <table style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+              }}>
+                <thead>
+                  <tr style={{ background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>
+                    <th style={{
+                      borderBottom: '2px solid #667eea',
+                      padding: '12px 16px',
+                      textAlign: 'left',
+                      color: '#333',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      width: '35%',
+                    }}>
+                      条件
+                    </th>
+                    <th style={{
+                      borderBottom: '2px solid #667eea',
+                      padding: '12px 16px',
+                      textAlign: 'center',
+                      color: '#333',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      width: '25%',
+                    }}>
+                      取得データ
+                    </th>
+                    <th style={{
+                      borderBottom: '2px solid #667eea',
+                      padding: '12px 16px',
+                      textAlign: 'center',
+                      color: '#333',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      width: '15%',
+                    }}>
+                      評価
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(data.screeningResults).map(([key, value], index) => {
+                    const info = screeningLabels[key]
+                    if (!info) return null
+                    
+                    let actualValue = data.actualValues?.[key]
+                    
+                    // 時価総額は10億ドル単位で表示
+                    if (key === 'marketCap' && actualValue !== undefined) {
+                      actualValue = actualValue / 1e9
+                    }
+                    
+                    return (
+                      <tr key={key} style={{
+                        background: index % 2 === 0 ? 'white' : '#f8f9ff',
+                      }}>
+                        <td style={{
+                          borderBottom: '1px solid #e0e0e0',
+                          padding: '12px 16px',
+                        }}>
+                          <div style={{
+                            color: '#333',
+                            fontSize: '14px',
+                            fontWeight: 500,
+                            marginBottom: '4px',
+                          }}>
+                            {info.label}
+                          </div>
+                          <div style={{
+                            color: '#666',
+                            fontSize: '11px',
+                            lineHeight: '1.3',
+                          }}>
+                            {info.criteria}
+                          </div>
+                        </td>
+                        <td style={{
+                          borderBottom: '1px solid #e0e0e0',
+                          padding: '12px 16px',
+                          textAlign: 'center',
+                          fontSize: '15px',
+                          fontWeight: 600,
+                          color: '#444',
+                        }}>
+                          {actualValue !== undefined 
+                            ? `${actualValue.toFixed(2)}${info.unit}`
+                            : '-'}
+                        </td>
+                        <td style={{
+                          borderBottom: '1px solid #e0e0e0',
+                          padding: '12px 16px',
+                          textAlign: 'center',
+                          fontSize: '20px',
+                          fontWeight: 700,
+                          color: value === '◎' ? '#27ae60' 
+                              : value === '○' || value === '〇' ? '#3498db' 
+                              : value === '△' ? '#f39c12' 
+                              : '#e74c3c',
+                        }}>
+                          {value}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* 総合判定セクション */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '20px',
+              marginBottom: '20px',
+            }}>
+              {/* 長期保有適性 */}
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.95)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '20px',
+                padding: '24px',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+                textAlign: 'center',
+              }}>
+                <h3 style={{
+                  fontSize: '18px',
+                  marginBottom: '16px',
+                  color: '#333',
+                }}>
+                  📊 長期保有適性
+                </h3>
+                <div style={{
+                  fontSize: '48px',
+                  fontWeight: 700,
+                  marginBottom: '12px',
+                  color: data.longTermSuitability === '◎' ? '#27ae60'
+                      : data.longTermSuitability === '○' || data.longTermSuitability === '〇' ? '#3498db'
+                      : data.longTermSuitability === '△' ? '#f39c12'
+                      : '#e74c3c',
+                }}>
+                  {data.longTermSuitability}
+                </div>
+                <p style={{
+                  fontSize: '13px',
+                  color: '#666',
+                  lineHeight: '1.6',
+                }}>
+                  {data.longTermSuitability === '◎' 
+                    ? '財務健全性が高く、長期保有に適しています' 
+                    : data.longTermSuitability === '○' || data.longTermSuitability === '〇'
+                    ? 'まあまあの財務状態です'
+                    : data.longTermSuitability === '△'
+                    ? 'やや不安な要素があります'
+                    : '致命的な弱点があります'}
+                </p>
+              </div>
+
+              {/* テンバガー適性 */}
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.95)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '20px',
+                padding: '24px',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+                textAlign: 'center',
+              }}>
+                <h3 style={{
+                  fontSize: '18px',
+                  marginBottom: '16px',
+                  color: '#333',
+                }}>
+                  🚀 テンバガー適性
+                </h3>
+                <div style={{
+                  fontSize: '48px',
+                  fontWeight: 700,
+                  marginBottom: '8px',
+                  color: data.tenbaggerPotential.rating === '◎' ? '#27ae60'
+                      : data.tenbaggerPotential.rating === '○' || data.tenbaggerPotential.rating === '〇' ? '#3498db'
+                      : data.tenbaggerPotential.rating === '△' ? '#f39c12'
+                      : '#e74c3c',
+                }}>
+                  {data.tenbaggerPotential.rating}
+                </div>
+                <div style={{
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  color: '#667eea',
+                  marginBottom: '12px',
+                }}>
+                  スコア: {data.tenbaggerPotential.score}/100
+                </div>
+                <p style={{
+                  fontSize: '13px',
+                  color: '#666',
+                  lineHeight: '1.6',
+                }}>
+                  {data.tenbaggerPotential.rating === '◎'
+                    ? '10倍株の条件を高いレベルで満たしています'
+                    : data.tenbaggerPotential.rating === '○' || data.tenbaggerPotential.rating === '〇'
+                    ? '10倍株の可能性があります'
+                    : data.tenbaggerPotential.rating === '△'
+                    ? '一部条件を満たしていますが要検討'
+                    : 'テンバガー条件を満たしていません'}
+                </p>
+              </div>
+            </div>
+
+            {/* テンバガー詳細分析 */}
+            {/* <div style={{
+              background: 'rgba(255, 255, 255, 0.95)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: '20px',
+              padding: '24px',
+              marginBottom: '20px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+            }}>
+              <h3 style={{
+                fontSize: '18px',
+                marginBottom: '16px',
+                color: '#333',
+              }}>
+                🔍 テンバガー条件詳細チェック
+              </h3>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+              }}>
+                {data.tenbaggerPotential.details.map((detail, index) => {
+                  const isPositive = detail.startsWith('✅')
+                  const isNeutral = detail.startsWith('○') || detail.startsWith('△')
+                  const isNegative = detail.startsWith('×')
+                  
+                  return (
+                    <div
+                      key={index}
+                      style={{
+                        padding: '12px 16px',
+                        borderRadius: '8px',
+                        background: isPositive ? '#e8f5e9'
+                          : isNeutral ? '#fff3e0'
+                          : '#ffebee',
+                        borderLeft: `4px solid ${
+                          isPositive ? '#27ae60'
+                          : isNeutral ? '#f39c12'
+                          : '#e74c3c'
+                        }`,
+                        fontSize: '14px',
+                        color: '#333',
+                      }}
+                    >
+                      {detail}
+                    </div>
+                  )
+                })}
+              </div>
+            </div> */}
+          </>
+        )}
 
         {/* セクターランキング */}
         {sectorData && (
