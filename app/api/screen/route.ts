@@ -19,7 +19,7 @@ function evaluateLongTermSuitability(
     return '×'; // 致命的な弱点あり
   }
   
-  if (goodOrBetterCount >= 3) {
+  if (goodOrBetterCount >= 2 && excellentCount >= 1) {
     return '◎'; // 長期保有に適している
   }
   

@@ -44,7 +44,7 @@ const screeningLabels: Record<string, {
   marketCap: {
     label: '時価総額',
     unit: 'B',
-    criteria: '◎100-500億 ○50-1000億 △10-50億 ×範囲外'
+    criteria: '◎100-1000億 ○50-2000億 △10-50億 ×範囲外'
   },
   roe: {
     label: 'ROE（自己資本利益率）',

@@ -190,9 +190,9 @@ export function screenStocks(stats: StockStats[]): ScreeningResult[] {
     // 時価総額の評価（10億ドル = 1B = 約1300億円）
     const marketCapInBillions = stock.marketCap / 1e9;
     const marketCap =
-      marketCapInBillions >= 10 && marketCapInBillions <= 50
+      marketCapInBillions >= 10 && marketCapInBillions <= 100
         ? "◎"  // 100-500億ドル（理想的なテンバガーレンジ）
-        : marketCapInBillions >= 5 && marketCapInBillions <= 100
+        : marketCapInBillions >= 5 && marketCapInBillions <= 200
           ? "○"  // 50-1000億ドル（許容範囲）
           : marketCapInBillions >= 1 && marketCapInBillions < 5
             ? "△"  // 10-50億ドル（小型株、リスク高）
