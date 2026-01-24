@@ -145,8 +145,11 @@ useEffect(() => {
   // 入力が止まってから500ms後に実行
   const timer = setTimeout(() => {
     // 検索処理
+      // リクエストを送信
     fetch(`/api/search?keywords=${encodeURIComponent(inputValue)}`)
+      // APIのレスポンスをjsonに変換
       .then(res => res.json())
+      // 取得したデータを状態にセット
       .then(data => setCandidates(data))
       .catch(err => {
         console.error("Search error:", err)
@@ -320,7 +323,7 @@ const handleSelect = (item: StockSearchResult) => {
                 marginTop: '8px',
                 maxHeight: '300px',
                 overflowY: 'auto',
-                zIndex: 1000,
+                zIndex: 9999,
                 boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
               }}>
                 {candidates.map((item) => (
