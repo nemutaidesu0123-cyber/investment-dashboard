@@ -282,6 +282,8 @@ const handleSelect = (item: StockSearchResult) => {
           padding: '24px',
           marginBottom: '20px',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+          position: 'relative',
+          zIndex: 100,
         }}>
           <div style={{ position: 'relative', marginBottom: '20px' }}>
             <label style={{
@@ -323,7 +325,7 @@ const handleSelect = (item: StockSearchResult) => {
                 marginTop: '8px',
                 maxHeight: '300px',
                 overflowY: 'auto',
-                zIndex: 9999,
+                zIndex: 101,
                 boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
               }}>
                 {candidates.map((item) => (
