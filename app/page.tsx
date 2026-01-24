@@ -135,32 +135,38 @@ export default function Home() {
       .catch(err => console.error('セクターデータ読み込みエラー:', err))
   }, [])
 
-  useEffect(() => {
-    // 入力が止まってから500ms後に実行
-    const timer = setTimeout(() => {
-      // 検索処理
-      // リクエストを送信
-      fetch(`/api/search?keywords=${encodeURIComponent(inputValue)}`)
-      // APIのレスポンスをjsonに変換
+useEffect(() => {
+  // 入力が空、または現在選択中のシンボルと同じ場合は検索しない
+  if (!inputValue || inputValue === symbol) {
+    setCandidates([])
+    return
+  }
+
+  // 入力が止まってから500ms後に実行
+  const timer = setTimeout(() => {
+    // 検索処理
+    fetch(`/api/search?keywords=${encodeURIComponent(inputValue)}`)
       .then(res => res.json())
-      // 取得したデータを状態にセット
       .then(data => setCandidates(data))
       .catch(err => {
         console.error("Search error:", err)
         setCandidates([])
       })
-    }, 500)
+  }, 500)
 
-    // クリーンアップ(次の入力があったらキャンセル)
-    return () => clearTimeout(timer)
-  }, [inputValue])
+  // クリーンアップ(次の入力があったらキャンセル)
+  return () => clearTimeout(timer)
+}, [inputValue, symbol]) // symbolを依存配列に追加
 
-  // 候補を選択
-  const handleSelect = (item: StockSearchResult) => {
-    setSymbol(item.symbol)
-    setInputValue(item.symbol)
-    setCandidates([]) // プルダウンを閉じる
-  }
+// 候補を選択
+const handleSelect = (item: StockSearchResult) => {
+  setSymbol(item.symbol)
+  setInputValue(item.symbol)
+  setCandidates([]) // プルダウンを閉じる
+  // 入力フィールドからフォーカスを外す
+  const input = document.activeElement as HTMLElement
+  input?.blur()
+}
 
   useEffect(() => {
     setLoading(true)

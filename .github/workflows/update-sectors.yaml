@@ -5,6 +5,9 @@ on:
     - cron: '0 22 * * *'  # 毎日22:00 UTC = 日本時間 翌朝7:00
   workflow_dispatch:  # 手動実行ボタン
 
+permissions:
+  contents: write  # リポジトリへの書き込み権限を追加
+
 jobs:
   update:
     runs-on: ubuntu-latest
@@ -12,6 +15,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Setup Node.js
         uses: actions/setup-node@v3
