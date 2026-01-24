@@ -225,11 +225,11 @@ export function screenStocks(stats: StockStats[]): ScreeningResult[] {
 
     // ROE（自己資本利益率）の評価
     const roe =
-      stock.returnOnEquity > 15
+      stock.returnOnEquity > 0.15
         ? "◎"
-        : stock.returnOnEquity > 10
+        : stock.returnOnEquity > 0.1
           ? "〇"
-          : stock.returnOnEquity > 5
+          : stock.returnOnEquity > 0.05
             ? "△"
             : "×"
 
@@ -285,11 +285,11 @@ export function screenStocks(stats: StockStats[]): ScreeningResult[] {
 
     // ROA（総資産利益率）の評価
     const roa =
-      stock.roa >= 5
+      stock.roa >= 0.08
         ? "◎"
-        : stock.roa >= 3
+        : stock.roa >= 0.05
           ? "〇"
-          : stock.roa >= 1
+          : stock.roa >= 0.03
             ? "△"
             : "×"
 

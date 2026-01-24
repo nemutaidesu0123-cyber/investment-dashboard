@@ -79,7 +79,7 @@ const screeningLabels: Record<string, {
   roa: {
     label: 'ROA（総資産利益率）',
     unit: '%',
-    criteria: '◎5%以上 ○3%以上 △1%以上 ×1%未満'
+    criteria: '◎8%以上 ○5%以上 △3%以上 ×3%未満'
   },
   equityRatio: {
     label: '自己資本比率',

@@ -9,6 +9,7 @@ function evaluateLongTermSuitability(
   // ◎と○の数をカウント
   const excellentCount = Object.values(screeningResults).filter(v => v === '◎').length;
   const goodOrBetterCount = Object.values(screeningResults).filter(v => v === '◎' || v === '○' || v === '〇').length;
+  const normalCount = Object.values(screeningResults).filter(v => v === '△').length;
   
   // 絶対×になってはいけない項目（収益性・キャッシュフロー・財務安定性）
   const criticalItems = ['positiveCF', 'equityRatio'];
@@ -19,11 +20,11 @@ function evaluateLongTermSuitability(
     return '×'; // 致命的な弱点あり
   }
   
-  if (goodOrBetterCount >= 2 && excellentCount >= 1) {
+  if (goodOrBetterCount >= 5 && excellentCount >= 2) {
     return '◎'; // 長期保有に適している
   }
   
-  if (goodOrBetterCount >= 2) {
+  if (goodOrBetterCount >= 3 || normalCount >= 4) {
     return '○'; // まあまあ
   }
   
@@ -220,7 +221,6 @@ export async function GET(request: Request) {
       ? revenueData.value 
       : null;
 
-    // 以降は既存のロジック...
     const screeningResultsArray = screenStocks([statsValue]);
     const screeningResults: Record<string, string> = {
       marketCap: screeningResultsArray[0].marketCap,
@@ -236,13 +236,13 @@ export async function GET(request: Request) {
     };
 
     const actualValues = {
-      roe: statsValue.returnOnEquity || 0,
+      roe: statsValue.returnOnEquity * 100 || 0,
       psr: statsValue.revenue > 0 ? statsValue.marketCap / statsValue.revenue : 0,
       cashRich: statsValue.marketCap > 0 ? (statsValue.totalCash / statsValue.marketCap) * 100 : 0,
       positiveCF: statsValue.marketCap > 0 ? (statsValue.operatingCashflow / statsValue.marketCap) * 100 : 0,
       per: statsValue.per || 0,
       pbr: statsValue.pbr || 0,
-      roa: statsValue.roa || 0,
+      roa: statsValue.roa * 100 || 0,
       equityRatio: statsValue.equityRatio || 0,
       eps: statsValue.eps || 0,
       marketCap: statsValue.marketCap || 0,
