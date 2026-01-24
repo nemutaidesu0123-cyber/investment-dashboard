@@ -218,7 +218,7 @@ export function screenStocks(stats: StockStats[]): ScreeningResult[] {
       marketCapInBillions >= 10 && marketCapInBillions <= 100
         ? "◎"  // 100-500億ドル（理想的なテンバガーレンジ）
         : marketCapInBillions >= 5 && marketCapInBillions <= 200
-          ? "○"  // 50-1000億ドル（許容範囲）
+          ? "〇"  // 50-1000億ドル（許容範囲）
           : marketCapInBillions >= 1 && marketCapInBillions < 5
             ? "△"  // 10-50億ドル（小型株、リスク高）
             : "×"; // それ以外（大型すぎるor小さすぎる）
