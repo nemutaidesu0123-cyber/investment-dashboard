@@ -44,52 +44,52 @@ const screeningLabels: Record<string, {
   marketCap: {
     label: '時価総額',
     unit: 'B',
-    criteria: '◎100-1000億 ○50-2000億 △10-50億 ×範囲外'
+    criteria: '◎100-1000億 〇50-2000億 △10-50億 ×範囲外'
   },
   roe: {
     label: 'ROE（自己資本利益率）',
     unit: '%',
-    criteria: '◎15%超 ○10%超 △5%超 ×5%以下'
+    criteria: '◎15%超 〇10%超 △5%超 ×5%以下'
   },
   psr: {
     label: 'PSR（株価売上高倍率）',
     unit: '倍',
-    criteria: '◎1倍未満 ○2倍未満 △3倍未満 ×3倍以上'
+    criteria: '◎1倍未満 〇2倍未満 △3倍未満 ×3倍以上'
   },
   cashRich: {
     label: 'キャッシュリッチ度',
     unit: '%',
-    criteria: '◎50%超 ○20%超 △10%超 ×10%以下'
+    criteria: '◎50%超 〇20%超 △10%超 ×10%以下'
   },
   positiveCF: {
     label: '営業キャッシュフロー',
     unit: '%',
-    criteria: '◎プラス ○-10%以内 △-20%以内 ×-20%超'
+    criteria: '◎プラス 〇-10%以内 △-20%以内 ×-20%超'
   },
   per: {
     label: 'PER（株価収益率）',
     unit: '倍',
-    criteria: '◎15倍以下 ○20倍以下 △30倍以下 ×30倍超'
+    criteria: '◎15倍以下 〇20倍以下 △30倍以下 ×30倍超'
   },
   pbr: {
     label: 'PBR（株価純資産倍率）',
     unit: '倍',
-    criteria: '◎1倍未満 ○2倍未満 △3倍未満 ×3倍以上'
+    criteria: '◎1倍未満 〇2倍未満 △3倍未満 ×3倍以上'
   },
   roa: {
     label: 'ROA（総資産利益率）',
     unit: '%',
-    criteria: '◎8%以上 ○5%以上 △3%以上 ×3%未満'
+    criteria: '◎8%以上 〇5%以上 △3%以上 ×3%未満'
   },
   equityRatio: {
     label: '自己資本比率',
     unit: '%',
-    criteria: '◎60%以上 ○40%以上 △20%以上 ×20%未満'
+    criteria: '◎60%以上 〇40%以上 △20%以上 ×20%未満'
   },
   eps: {
     label: 'EPS（1株当たり利益）',
     unit: 'ドル',
-    criteria: '◎1ドル以上 ○0.5ドル以上 △0.1ドル以上 ×0.1ドル未満'
+    criteria: '◎1ドル以上 〇0.5ドル以上 △0.1ドル以上 ×0.1ドル未満'
   }
 }
 
@@ -693,7 +693,7 @@ const handleSelect = (item: StockSearchResult) => {
                           fontSize: '20px',
                           fontWeight: 700,
                           color: value === '◎' ? '#27ae60' 
-                              : value === '○' || value === '〇' ? '#3498db' 
+                              : value === '〇' ? '#3498db' 
                               : value === '△' ? '#f39c12' 
                               : '#e74c3c',
                         }}>
@@ -742,7 +742,7 @@ const handleSelect = (item: StockSearchResult) => {
                   fontWeight: 700,
                   marginBottom: '12px',
                   color: data.longTermSuitability === '◎' ? '#27ae60'
-                      : data.longTermSuitability === '○' || data.longTermSuitability === '〇' ? '#3498db'
+                      : data.longTermSuitability === '〇' ? '#3498db'
                       : data.longTermSuitability === '△' ? '#f39c12'
                       : '#e74c3c',
                 }}>
@@ -755,7 +755,7 @@ const handleSelect = (item: StockSearchResult) => {
                 }}>
                   {data.longTermSuitability === '◎' 
                     ? '財務健全性が高く、長期保有に適しています' 
-                    : data.longTermSuitability === '○' || data.longTermSuitability === '〇'
+                    : data.longTermSuitability === '〇' || data.longTermSuitability === '〇'
                     ? 'まあまあの財務状態です'
                     : data.longTermSuitability === '△'
                     ? 'やや不安な要素があります'
@@ -784,7 +784,7 @@ const handleSelect = (item: StockSearchResult) => {
                   fontWeight: 700,
                   marginBottom: '8px',
                   color: data.tenbaggerPotential.rating === '◎' ? '#27ae60'
-                      : data.tenbaggerPotential.rating === '○' || data.tenbaggerPotential.rating === '〇' ? '#3498db'
+                      : data.tenbaggerPotential.rating === '〇' ? '#3498db'
                       : data.tenbaggerPotential.rating === '△' ? '#f39c12'
                       : '#e74c3c',
                 }}>
@@ -805,7 +805,7 @@ const handleSelect = (item: StockSearchResult) => {
                 }}>
                   {data.tenbaggerPotential.rating === '◎'
                     ? '10倍株の条件を高いレベルで満たしています'
-                    : data.tenbaggerPotential.rating === '○' || data.tenbaggerPotential.rating === '〇'
+                    : data.tenbaggerPotential.rating === '〇'
                     ? '10倍株の可能性があります'
                     : data.tenbaggerPotential.rating === '△'
                     ? '一部条件を満たしていますが要検討'
@@ -837,7 +837,7 @@ const handleSelect = (item: StockSearchResult) => {
               }}>
                 {data.tenbaggerPotential.details.map((detail, index) => {
                   const isPositive = detail.startsWith('✅')
-                  const isNeutral = detail.startsWith('○') || detail.startsWith('△')
+                  const isNeutral = detail.startsWith('〇') || detail.startsWith('△')
                   const isNegative = detail.startsWith('×')
                   
                   return (

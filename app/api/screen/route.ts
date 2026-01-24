@@ -6,9 +6,9 @@ function evaluateLongTermSuitability(
   screeningResults: Record<string, string>,
   actualValues: Record<string, number>
 ): string {
-  // ◎と○の数をカウント
+  // ◎と〇の数をカウント
   const excellentCount = Object.values(screeningResults).filter(v => v === '◎').length;
-  const goodOrBetterCount = Object.values(screeningResults).filter(v => v === '◎' || v === '○' || v === '〇').length;
+  const goodOrBetterCount = Object.values(screeningResults).filter(v => v === '◎' || v === '〇').length;
   const normalCount = Object.values(screeningResults).filter(v => v === '△').length;
   
   // 絶対×になってはいけない項目（収益性・キャッシュフロー・財務安定性）
@@ -25,7 +25,7 @@ function evaluateLongTermSuitability(
   }
   
   if (goodOrBetterCount >= 3 || normalCount >= 4) {
-    return '○'; // まあまあ
+    return '〇'; // まあまあ
   }
   
   return '△'; // やや不安
@@ -92,7 +92,7 @@ function evaluateTenbaggerPotential(
       details.push(`✅ 売上CAGR: ${revenueGrowth.cagr.toFixed(1)}% (超高成長)`);
     } else if (revenueGrowth.cagr >= 20) {
       score += 20;
-      details.push(`○ 売上CAGR: ${revenueGrowth.cagr.toFixed(1)}% (高成長)`);
+      details.push(`〇 売上CAGR: ${revenueGrowth.cagr.toFixed(1)}% (高成長)`);
     } else if (revenueGrowth.cagr >= 10) {
       score += 10;
       details.push(`△ 売上CAGR: ${revenueGrowth.cagr.toFixed(1)}% (まあまあ)`);
@@ -106,7 +106,7 @@ function evaluateTenbaggerPotential(
       details.push(`✅ 直近成長率: ${revenueGrowth.recentGrowth.toFixed(1)}% (加速中)`);
     } else if (revenueGrowth.recentGrowth >= 10) {
       score += 5;
-      details.push(`○ 直近成長率: ${revenueGrowth.recentGrowth.toFixed(1)}% (維持)`);
+      details.push(`〇 直近成長率: ${revenueGrowth.recentGrowth.toFixed(1)}% (維持)`);
     } else {
       details.push(`× 直近成長率: ${revenueGrowth.recentGrowth.toFixed(1)}% (鈍化懸念)`);
     }
@@ -121,7 +121,7 @@ function evaluateTenbaggerPotential(
     details.push(`✅ 時価総額: ${marketCapInBillions.toFixed(1)}B (最適レンジ)`);
   } else if (marketCapInBillions >= 5 && marketCapInBillions <= 100) {
     score += 12;
-    details.push(`○ 時価総額: ${marketCapInBillions.toFixed(1)}B (許容範囲)`);
+    details.push(`〇 時価総額: ${marketCapInBillions.toFixed(1)}B (許容範囲)`);
   } else {
     details.push(`× 時価総額: ${marketCapInBillions.toFixed(1)}B (範囲外)`);
   }
@@ -132,7 +132,7 @@ function evaluateTenbaggerPotential(
     details.push(`✅ ROE: ${actualValues.roe.toFixed(1)}% (高収益)`);
   } else if (actualValues.roe >= 10) {
     score += 10;
-    details.push(`○ ROE: ${actualValues.roe.toFixed(1)}% (まあまあ)`);
+    details.push(`〇 ROE: ${actualValues.roe.toFixed(1)}% (まあまあ)`);
   } else {
     details.push(`× ROE: ${actualValues.roe.toFixed(1)}% (低い)`);
   }
@@ -172,7 +172,7 @@ function evaluateTenbaggerPotential(
   if (score >= 80) {
     rating = '◎'; // 超有望
   } else if (score >= 60) {
-    rating = '○'; // 有望
+    rating = '〇'; // 有望
   } else if (score >= 40) {
     rating = '△'; // 検討の余地あり
   } else {
