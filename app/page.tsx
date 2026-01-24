@@ -435,7 +435,7 @@ const handleSelect = (item: StockSearchResult) => {
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                 <XAxis dataKey="x" stroke="#666" />
-                <YAxis domain={['auto', 'auto']} stroke="#666" />
+                <YAxis domain={['auto', 'auto']} stroke="#666" tickFormatter={(value) => value.toFixed(2)}/>
                 <Tooltip
                   contentStyle={{
                     background: 'rgba(255, 255, 255, 0.95)',
