@@ -32,16 +32,22 @@ export type StockSearchResult = {
 
 // 財務指標の型
 export interface StockStats {
+  symbol: string
   returnOnEquity: number
   marketCap: number
   revenue: number
   totalCash: number
   operatingCashflow: number
-  per: number  // PER
-  pbr: number  // PBR
-  roa: number  // ROA
-  equityRatio: number  // 自己資本比率
-  eps: number  // EPS
+  per: number
+  pbr: number
+  roa: number
+  equityRatio: number
+  eps: number
+  // 🆕 追加
+  fiftyTwoWeekLow: number
+  fiftyTwoWeekHigh: number
+  revenueGrowth: number  // Yahoo Financeの直近成長率
+  earningsGrowth: number
 }
 
 // スクリーニング結果の型（時価総額を追加）
@@ -184,6 +190,7 @@ export async function fetchStockStats(symbol: string): Promise<StockStats> {
       : 100
 
     const stats: StockStats = {
+      symbol: symbol,
       returnOnEquity: financialData.returnOnEquity || 0,
       marketCap: summaryDetail.marketCap || 0,
       revenue: financialData.totalRevenue || 0,
@@ -194,6 +201,11 @@ export async function fetchStockStats(symbol: string): Promise<StockStats> {
       roa: financialData.returnOnAssets || 0,
       equityRatio: calculatedEquityRatio,
       eps: keyStats.trailingEps || 0,
+      // 🆕 追加
+      fiftyTwoWeekLow: summaryDetail.fiftyTwoWeekLow || 0,
+      fiftyTwoWeekHigh: summaryDetail.fiftyTwoWeekHigh || 0,
+      revenueGrowth: financialData.revenueGrowth || 0,
+      earningsGrowth: financialData.earningsGrowth || 0,
     }
 
     console.log(`✅ Fetched stats for ${symbol}`)
@@ -206,124 +218,100 @@ export async function fetchStockStats(symbol: string): Promise<StockStats> {
   }
 }
 
-/**
- * 銘柄スクリーニング
- * 財務指標に基づいて銘柄を評価（時価総額評価を追加）
- */
-export function screenStocks(stats: StockStats[]): ScreeningResult[] {
-  return stats.map((stock) => {
-    // 時価総額の評価（10億ドル = 1B = 約1300億円）
-    const marketCapInBillions = stock.marketCap / 1e9;
-    const marketCap =
-      marketCapInBillions >= 10 && marketCapInBillions <= 100
-        ? "◎"  // 100-500億ドル（理想的なテンバガーレンジ）
-        : marketCapInBillions >= 5 && marketCapInBillions <= 200
-          ? "〇"  // 50-1000億ドル（許容範囲）
-          : marketCapInBillions >= 1 && marketCapInBillions < 5
-            ? "△"  // 10-50億ドル（小型株、リスク高）
-            : "×"; // それ以外（大型すぎるor小さすぎる）
+// 🆕 スクリーニング関数に通貨パラメータを追加
+export function screenStocks(
+  stats: StockStats[], 
+  currency: 'USD' | 'JPY' = 'USD'
+): ScreeningResult[] {
+  return stats.map((stat) => {
+    const isJPY = currency === 'JPY';
+    
+    // 時価総額（円建ての場合は億円単位で判定）
+    const marketCap = stat.marketCap;
+    let marketCapRating: string;
+    
+  if (isJPY) {
+    // 日本円：500億〜5兆円が理想（テンバガー候補レンジ）
+    const marketCapInOku = marketCap / 1e8;
+    if (marketCapInOku >= 5000 && marketCapInOku <= 50000) {
+      marketCapRating = '◎';
+    } else if (marketCapInOku >= 1000 && marketCapInOku <= 150000) {
+      marketCapRating = '〇';
+    } else if (marketCapInOku >= 500 && marketCapInOku <= 1000) {
+      marketCapRating = '△';
+    } else {
+      marketCapRating = '×';
+    }
+  } else {
+    // 米ドル：50億〜500億ドルが理想
+    const marketCapInBillion = marketCap / 1e9;
+    if (marketCapInBillion >= 50 && marketCapInBillion <= 500) {
+      marketCapRating = '◎';
+    } else if (marketCapInBillion >= 10 && marketCapInBillion <= 1000) {
+      marketCapRating = '〇';
+    } else if (marketCapInBillion >= 5 && marketCapInBillion <= 10) {
+      marketCapRating = '△';
+    } else {
+      marketCapRating = '×';
+    }
+  }
 
-    // ROE（自己資本利益率）の評価
-    const roe =
-      stock.returnOnEquity > 0.15
-        ? "◎"
-        : stock.returnOnEquity > 0.1
-          ? "〇"
-          : stock.returnOnEquity > 0.05
-            ? "△"
-            : "×"
+    // ROE
+    const roe = (stat.returnOnEquity || 0) * 100;
+    const roeRating = roe >= 15 ? '◎' : roe >= 10 ? '〇' : roe >= 5 ? '△' : '×';
 
-    // PSR（株価売上高倍率）の評価
-    const psr =
-      stock.marketCap / stock.revenue < 1
-        ? "◎"
-        : stock.marketCap / stock.revenue < 2
-          ? "〇"
-          : stock.marketCap / stock.revenue < 3
-            ? "△"
-            : "×"
+    // PSR
+    const psr = stat.revenue > 0 ? stat.marketCap / stat.revenue : 0;
+    const psrRating = psr < 1 ? '◎' : psr < 2 ? '〇' : psr < 3 ? '△' : '×';
 
-    // キャッシュリッチ度の評価
-    const cashRich =
-      stock.totalCash > stock.marketCap * 0.4
-        ? "◎"
-        : stock.totalCash > stock.marketCap * 0.2
-          ? "〇"
-          : stock.totalCash > stock.marketCap * 0.1
-            ? "△"
-            : "×"
+    // キャッシュリッチ度
+    const cashRich = stat.marketCap > 0 ? (stat.totalCash / stat.marketCap) * 100 : 0;
+    const cashRichRating = cashRich > 50 ? '◎' : cashRich > 20 ? '〇' : cashRich > 10 ? '△' : '×';
 
-    // 営業キャッシュフローの評価
-    const positiveCF =
-      stock.operatingCashflow > 0
-        ? "◎"
-        : stock.operatingCashflow > -0.1 * stock.marketCap
-          ? "〇"
-          : stock.operatingCashflow > -0.2 * stock.marketCap
-            ? "△"
-            : "×"
+    // 営業CF
+    const positiveCF = stat.marketCap > 0 ? (stat.operatingCashflow / stat.marketCap) * 100 : 0;
+    const positiveCFRating = positiveCF > 0 ? '◎' : positiveCF > -10 ? '〇' : positiveCF > -20 ? '△' : '×';
 
-    // PER（株価収益率）の評価
-    const per =
-      stock.per > 0 && stock.per <= 15
-        ? "◎"
-        : stock.per > 15 && stock.per <= 20
-          ? "〇"
-          : stock.per > 20 && stock.per <= 30
-            ? "△"
-            : "×"
+    // PER
+    const per = stat.per || 0;
+    const perRating = per > 0 && per <= 15 ? '◎' : per <= 20 ? '〇' : per <= 30 ? '△' : '×';
 
-    // PBR（株価純資産倍率）の評価
-    const pbr =
-      stock.pbr > 0 && stock.pbr < 1
-        ? "◎"
-        : stock.pbr >= 1 && stock.pbr < 2
-          ? "〇"
-          : stock.pbr >= 2 && stock.pbr < 3
-            ? "△"
-            : "×"
+    // PBR
+    const pbr = stat.pbr || 0;
+    const pbrRating = pbr < 1 ? '◎' : pbr < 2 ? '〇' : pbr < 3 ? '△' : '×';
 
-    // ROA（総資産利益率）の評価
-    const roa =
-      stock.roa >= 0.08
-        ? "◎"
-        : stock.roa >= 0.05
-          ? "〇"
-          : stock.roa >= 0.03
-            ? "△"
-            : "×"
+    // ROA
+    const roa = (stat.roa || 0) * 100;
+    const roaRating = roa >= 8 ? '◎' : roa >= 5 ? '〇' : roa >= 3 ? '△' : '×';
 
-    // 自己資本比率の評価
-    const equityRatio =
-      stock.equityRatio >= 60
-        ? "◎"
-        : stock.equityRatio >= 40
-          ? "〇"
-          : stock.equityRatio >= 20
-            ? "△"
-            : "×"
+    // 自己資本比率
+    const equityRatio = stat.equityRatio || 0;
+    const equityRatioRating = equityRatio >= 60 ? '◎' : equityRatio >= 40 ? '〇' : equityRatio >= 20 ? '△' : '×';
 
-    // EPS（1株当たり利益）の評価
-    const eps =
-      stock.eps >= 1
-        ? "◎"
-        : stock.eps >= 0.5
-          ? "〇"
-          : stock.eps >= 0.1
-            ? "△"
-            : "×"
+    // 🆕 EPS（通貨対応）
+    const eps = stat.eps || 0;
+    let epsRating: string;
+    
+    if (isJPY) {
+      // 日本円：100円以上が理想
+      epsRating = eps >= 100 ? '◎' : eps >= 50 ? '〇' : eps >= 10 ? '△' : '×';
+    } else {
+      // 米ドル：1ドル以上が理想
+      epsRating = eps >= 1 ? '◎' : eps >= 0.5 ? '〇' : eps >= 0.1 ? '△' : '×';
+    }
 
     return {
-      marketCap, // 時価総額を追加
-      roe,
-      psr,
-      cashRich,
-      positiveCF,
-      per,
-      pbr,
-      roa,
-      equityRatio,
-      eps,
-    }
-  })
+      symbol: stat.symbol,
+      marketCap: marketCapRating,
+      roe: roeRating,
+      psr: psrRating,
+      cashRich: cashRichRating,
+      positiveCF: positiveCFRating,
+      per: perRating,
+      pbr: pbrRating,
+      roa: roaRating,
+      equityRatio: equityRatioRating,
+      eps: epsRating,
+    };
+  });
 }

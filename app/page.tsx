@@ -13,7 +13,8 @@ import {
   CartesianGrid,
   ResponsiveContainer,
 } from "recharts"
-import { StockSearchResult } from "@/src/lib/searchApi"
+// 🆕 APIから直接インポート
+import { StockSearchResult } from "@/app/api/search/route"
 
 type Timeframe = "1min" | "5min" | "15min" | "30min" | "60min" | "daily" | "weekly" | "monthly"
 
@@ -35,65 +36,69 @@ type SectorRankings = {
   }
 }
 
-// スクリーニング条件の日本語ラベルと評価基準（時価総額を追加）
-const screeningLabels: Record<string, { 
-  label: string; 
-  unit: string;
-  criteria: string;
-}> = {
-  marketCap: {
-    label: '時価総額',
-    unit: 'B',
-    criteria: '◎100-1000億 〇50-2000億 △10-50億 ×範囲外'
-  },
-  roe: {
-    label: 'ROE（自己資本利益率）',
-    unit: '%',
-    criteria: '◎15%超 〇10%超 △5%超 ×5%以下'
-  },
-  psr: {
-    label: 'PSR（株価売上高倍率）',
-    unit: '倍',
-    criteria: '◎1倍未満 〇2倍未満 △3倍未満 ×3倍以上'
-  },
-  cashRich: {
-    label: 'キャッシュリッチ度',
-    unit: '%',
-    criteria: '◎50%超 〇20%超 △10%超 ×10%以下'
-  },
-  positiveCF: {
-    label: '営業キャッシュフロー',
-    unit: '%',
-    criteria: '◎プラス 〇-10%以内 △-20%以内 ×-20%超'
-  },
-  per: {
-    label: 'PER（株価収益率）',
-    unit: '倍',
-    criteria: '◎15倍以下 〇20倍以下 △30倍以下 ×30倍超'
-  },
-  pbr: {
-    label: 'PBR（株価純資産倍率）',
-    unit: '倍',
-    criteria: '◎1倍未満 〇2倍未満 △3倍未満 ×3倍以上'
-  },
-  roa: {
-    label: 'ROA（総資産利益率）',
-    unit: '%',
-    criteria: '◎8%以上 〇5%以上 △3%以上 ×3%未満'
-  },
-  equityRatio: {
-    label: '自己資本比率',
-    unit: '%',
-    criteria: '◎60%以上 〇40%以上 △20%以上 ×20%未満'
-  },
-  eps: {
-    label: 'EPS（1株当たり利益）',
-    unit: 'ドル',
-    criteria: '◎1ドル以上 〇0.5ドル以上 △0.1ドル以上 ×0.1ドル未満'
-  }
-}
+// 🆕 通貨に応じたラベルを動的生成
+const getScreeningLabels = (currency: 'USD' | 'JPY' = 'USD') => {
+  const isJPY = currency === 'JPY';
+  
+  return {
+    marketCap: {
+      label: '時価総額',
+      unit: isJPY ? '兆円' : 'B',
+      criteria: isJPY 
+        ? '◎0.5-5兆円 〇0.1-15兆円 △500-1000億円 ×範囲外'
+        : '◎50-500億ドル 〇10-1000億ドル △5-10億ドル ×範囲外'
+    },
+    roe: {
+      label: 'ROE（自己資本利益率）',
+      unit: '%',
+      criteria: '◎15%超 〇10%超 △5%超 ×5%以下'
+    },
+    psr: {
+      label: 'PSR（株価売上高倍率）',
+      unit: '倍',
+      criteria: '◎1倍未満 〇2倍未満 △3倍未満 ×3倍以上'
+    },
+    cashRich: {
+      label: 'キャッシュリッチ度',
+      unit: '%',
+      criteria: '◎50%超 〇20%超 △10%超 ×10%以下'
+    },
+    positiveCF: {
+      label: '営業キャッシュフロー',
+      unit: '%',
+      criteria: '◎プラス 〇-10%以内 △-20%以内 ×-20%超'
+    },
+    per: {
+      label: 'PER（株価収益率）',
+      unit: '倍',
+      criteria: '◎15倍以下 〇20倍以下 △30倍以下 ×30倍超'
+    },
+    pbr: {
+      label: 'PBR（株価純資産倍率）',
+      unit: '倍',
+      criteria: '◎1倍未満 〇2倍未満 △3倍未満 ×3倍以上'
+    },
+    roa: {
+      label: 'ROA（総資産利益率）',
+      unit: '%',
+      criteria: '◎8%以上 〇5%以上 △3%以上 ×3%未満'
+    },
+    equityRatio: {
+      label: '自己資本比率',
+      unit: '%',
+      criteria: '◎60%以上 〇40%以上 △20%以上 ×20%未満'
+    },
+    eps: {
+      label: 'EPS（1株当たり利益）',
+      unit: isJPY ? '円' : 'ドル',
+      criteria: isJPY
+        ? '◎100円以上 〇50円以上 △10円以上 ×10円未満'
+        : '◎1ドル以上 〇0.5ドル以上 △0.1ドル以上 ×0.1ドル未満'
+    }
+  };
+};
 
-// データの型定義（完全版）
+// 🆕 データの型定義（拡張版）
 interface ScreeningData {
   maxPrice: number;
   minPrice: number;
@@ -106,8 +111,10 @@ interface ScreeningData {
     score: number;
     details: string[];
   };
+  currency: 'USD' | 'JPY';        // 🆕
+  exchangeRate?: number;          // 🆕
+  companyName?: string;           // 🆕
 }
-
 
 
 export default function Home() {
@@ -341,8 +348,30 @@ const handleSelect = (item: StockSearchResult) => {
                     onMouseEnter={(e) => e.currentTarget.style.background = '#f8f9ff'}
                     onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
                   >
-                    <strong style={{ color: '#667eea' }}>{item.symbol}</strong>
-                    <span style={{ color: '#666', marginLeft: '8px' }}>{item.name}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <strong style={{ color: '#667eea' }}>{item.symbol}</strong>
+                      {/* 🆕 地域バッジ */}
+                      <span style={{
+                        fontSize: '10px',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        background: item.region === 'JP' ? '#ffebee' : '#e3f2fd',
+                        color: item.region === 'JP' ? '#c62828' : '#1565c0',
+                        fontWeight: 600,
+                      }}>
+                        {item.region === 'JP' ? '🇯🇵 JP' : '🇺🇸 US'}
+                      </span>
+                      {/* 🆕 市場名（日本株のみ） */}
+                      {item.market && (
+                        <span style={{ fontSize: '11px', color: '#999' }}>
+                          [{item.market}]
+                        </span>
+                      )}
+                    </div>
+                    {/* 🆕 企業名表示（日本語優先） */}
+                    <span style={{ color: '#666', fontSize: '14px' }}>
+                      {item.nameJa || item.name}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -404,32 +433,24 @@ const handleSelect = (item: StockSearchResult) => {
           marginBottom: '20px',
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
         }}>
-          <h2 style={{
-            fontSize: 'clamp(20px, 4vw, 28px)',
-            marginBottom: '20px',
-            color: '#333',
-          }}>
-            {symbol} 株価チャート
-          </h2>
-
-          {loading && <p style={{ textAlign: 'center', color: '#667eea' }}>読み込み中...</p>}
-          {error && (
-            <div style={{
-              padding: '20px',
-              background: '#ffebee',
-              borderLeft: '4px solid #e74c3c',
-              borderRadius: '8px',
-              color: '#c62828',
-              marginBottom: '20px',
+        <h2 style={{
+          fontSize: 'clamp(20px, 4vw, 28px)',
+          marginBottom: '20px',
+          color: '#333',
+        }}>
+          {/* 🆕 企業名がある場合は企業名を優先表示 */}
+          {data?.companyName || symbol} 株価チャート
+          {data?.companyName && (
+            <span style={{ 
+              fontSize: '16px', 
+              color: '#999', 
+              marginLeft: '8px',
+              fontWeight: 400,
             }}>
-              <strong>⚠️ エラー:</strong> {error}
-              <div style={{ fontSize: '13px', marginTop: '8px', color: '#666' }}>
-                しばらく待ってから再度お試しください。
-              </div>
-            </div>
+              ({symbol})
+            </span>
           )}
-
-          
+        </h2>
           {!loading && !error && chartData.length > 0 && (
             <ResponsiveContainer width="100%" height={400}>
               <LineChart data={chartData}>
@@ -597,113 +618,147 @@ const handleSelect = (item: StockSearchResult) => {
                 ✅ 財務指標スクリーニング
               </h2>
               {data.screeningResults && data.actualValues ? (
-              <table style={{
-                width: '100%',
-                borderCollapse: 'collapse',
-              }}>
-                <thead>
-                  <tr style={{ background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>
-                    <th style={{
-                      borderBottom: '2px solid #667eea',
-                      padding: '12px 16px',
-                      textAlign: 'left',
-                      color: '#333',
-                      fontWeight: 600,
-                      fontSize: '14px',
-                      width: '35%',
-                    }}>
-                      条件
-                    </th>
-                    <th style={{
-                      borderBottom: '2px solid #667eea',
-                      padding: '12px 16px',
+                <>
+                  {/* 🆕 為替レート表示（日本株の場合） */}
+                  {data.currency === 'JPY' && data.exchangeRate && (
+                    <div style={{
+                      padding: '12px',
+                      background: '#fff3e0',
+                      borderRadius: '8px',
+                      marginBottom: '16px',
+                      fontSize: '13px',
+                      color: '#e65100',
                       textAlign: 'center',
-                      color: '#333',
-                      fontWeight: 600,
-                      fontSize: '14px',
-                      width: '25%',
                     }}>
-                      取得データ
-                    </th>
-                    <th style={{
-                      borderBottom: '2px solid #667eea',
-                      padding: '12px 16px',
-                      textAlign: 'center',
-                      color: '#333',
-                      fontWeight: 600,
-                      fontSize: '14px',
-                      width: '15%',
-                    }}>
-                      評価
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(data.screeningResults).map(([key, value], index) => {
-                    const info = screeningLabels[key]
-                    if (!info) return null
-                    
-                    let actualValue = data.actualValues?.[key]
-                    
-                    // 時価総額は10億ドル単位で表示
-                    if (key === 'marketCap' && actualValue !== undefined) {
-                      actualValue = actualValue / 1e9
-                    }
-                    
-                    return (
-                      <tr key={key} style={{
-                        background: index % 2 === 0 ? 'white' : '#f8f9ff',
-                      }}>
-                        <td style={{
-                          borderBottom: '1px solid #e0e0e0',
+                      💱 為替レート: 1 USD = {data.exchangeRate.toFixed(2)} 円
+                    </div>
+                  )}
+                  
+                  <table style={{
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                  }}>
+                    {/* テーブルヘッダー・ボディは既存のまま */}
+                    <thead>
+                      <tr style={{ background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>
+                        <th style={{
+                          borderBottom: '2px solid #667eea',
                           padding: '12px 16px',
-                        }}>
-                          <div style={{
-                            color: '#333',
-                            fontSize: '14px',
-                            fontWeight: 500,
-                            marginBottom: '4px',
-                          }}>
-                            {info.label}
-                          </div>
-                          <div style={{
-                            color: '#666',
-                            fontSize: '11px',
-                            lineHeight: '1.3',
-                          }}>
-                            {info.criteria}
-                          </div>
-                        </td>
-                        <td style={{
-                          borderBottom: '1px solid #e0e0e0',
-                          padding: '12px 16px',
-                          textAlign: 'center',
-                          fontSize: '15px',
+                          textAlign: 'left',
+                          color: '#333',
                           fontWeight: 600,
-                          color: '#444',
+                          fontSize: '14px',
+                          width: '35%',
                         }}>
-                          {actualValue !== undefined 
-                            ? `${actualValue.toFixed(2)}${info.unit}`
-                            : '-'}
-                        </td>
-                        <td style={{
-                          borderBottom: '1px solid #e0e0e0',
+                          条件
+                        </th>
+                        <th style={{
+                          borderBottom: '2px solid #667eea',
                           padding: '12px 16px',
                           textAlign: 'center',
-                          fontSize: '20px',
-                          fontWeight: 700,
-                          color: value === '◎' ? '#27ae60' 
-                              : value === '〇' ? '#3498db' 
-                              : value === '△' ? '#f39c12' 
-                              : '#e74c3c',
+                          color: '#333',
+                          fontWeight: 600,
+                          fontSize: '14px',
+                          width: '25%',
                         }}>
-                          {value}
-                        </td>
+                          取得データ
+                        </th>
+                        <th style={{
+                          borderBottom: '2px solid #667eea',
+                          padding: '12px 16px',
+                          textAlign: 'center',
+                          color: '#333',
+                          fontWeight: 600,
+                          fontSize: '14px',
+                          width: '15%',
+                        }}>
+                          評価
+                        </th>
                       </tr>
-                    )
-                  })}
-                </tbody>
-              </table> ): (
+                    </thead>
+                    <tbody>
+                      {Object.entries(data.screeningResults).map(([key, value], index) => {
+                        const screeningLabels = getScreeningLabels(data.currency);
+                        const info = screeningLabels[key as keyof typeof screeningLabels];
+                        if (!info) return null;
+                        
+                        let actualValue = data.actualValues?.[key];
+                        let displayValue = '';
+                        
+                        // 🆕 通貨に応じた時価総額の単位変換と表示
+                        if (key === 'marketCap' && actualValue !== undefined) {
+                          if (data.currency === 'JPY') {
+                            const oku = actualValue / 1e8; // 億円
+                            if (oku >= 10000) {
+                              // 1兆円以上は「兆円」表記
+                              displayValue = `${(oku / 10000).toFixed(2)}兆円`;
+                            } else {
+                              displayValue = `${oku.toFixed(2)}億円`;
+                            }
+                          } else {
+                            const billion = actualValue / 1e9; // 10億ドル
+                            displayValue = `${billion.toFixed(2)}B`;
+                          }
+                        } else if (actualValue !== undefined) {
+                          displayValue = `${actualValue.toFixed(2)}${info.unit}`;
+                        } else {
+                          displayValue = '-';
+                        }
+                        
+                        return (
+                          <tr key={key} style={{
+                            background: index % 2 === 0 ? 'white' : '#f8f9ff',
+                          }}>
+                            <td style={{
+                              borderBottom: '1px solid #e0e0e0',
+                              padding: '12px 16px',
+                            }}>
+                              <div style={{
+                                color: '#333',
+                                fontSize: '14px',
+                                fontWeight: 500,
+                                marginBottom: '4px',
+                              }}>
+                                {info.label}
+                              </div>
+                              <div style={{
+                                color: '#666',
+                                fontSize: '11px',
+                                lineHeight: '1.3',
+                              }}>
+                                {info.criteria}
+                              </div>
+                            </td>
+                            <td style={{
+                              borderBottom: '1px solid #e0e0e0',
+                              padding: '12px 16px',
+                              textAlign: 'center',
+                              fontSize: '15px',
+                              fontWeight: 600,
+                              color: '#444',
+                            }}>
+                              {displayValue}
+                            </td>
+                            <td style={{
+                              borderBottom: '1px solid #e0e0e0',
+                              padding: '12px 16px',
+                              textAlign: 'center',
+                              fontSize: '20px',
+                              fontWeight: 700,
+                              color: value === '◎' ? '#27ae60' 
+                                  : value === '〇' ? '#3498db' 
+                                  : value === '△' ? '#f39c12' 
+                                  : '#e74c3c',
+                            }}>
+                              {value}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </>
+              ) : (
                 <div style={{
                   padding: '20px',
                   textAlign: 'center',

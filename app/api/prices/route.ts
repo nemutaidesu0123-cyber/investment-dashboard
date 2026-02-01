@@ -13,12 +13,28 @@ class YahooFinanceError extends Error {
   }
 }
 
+// 🆕 日本株判定関数
+function isJapaneseStock(symbol: string): boolean {
+  // .T (東証), .JP (その他日本市場) で終わる、または4桁数字のみ
+  return symbol.endsWith('.T') || 
+         symbol.endsWith('.JP') ||
+         /^\d{4}$/.test(symbol)
+}
+
+// 🆕 日本株のティッカー正規化
+function normalizeJapaneseSymbol(symbol: string): string {
+  // 4桁数字のみの場合は .T を追加（東証プライム）
+  if (/^\d{4}$/.test(symbol)) {
+    return `${symbol}.T`
+  }
+  return symbol
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const symbol = searchParams.get("symbol")
+  let symbol = searchParams.get("symbol")
   const timeframe = searchParams.get("timeframe") ?? "daily"
-  console.log("📊 API Request:", { symbol, timeframe })
-
+  
   if (!symbol) {
     console.error("❌ Missing symbol parameter")
     return NextResponse.json(
@@ -26,6 +42,17 @@ export async function GET(request: NextRequest) {
       { status: 400 }
     )
   }
+
+  // 🆕 日本株の場合はシンボルを正規化
+  const isJP = isJapaneseStock(symbol)
+  if (isJP) {
+    symbol = normalizeJapaneseSymbol(symbol)
+    console.log(`🇯🇵 Japanese stock detected: ${symbol}`)
+  } else {
+    console.log(`🇺🇸 US stock detected: ${symbol}`)
+  }
+
+  console.log("📊 API Request:", { symbol, timeframe, region: isJP ? 'JP' : 'US' })
 
   try {
     console.log(`📈 Fetching prices for ${symbol}...`)
