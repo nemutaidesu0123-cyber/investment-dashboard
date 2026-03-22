@@ -1,15 +1,11 @@
 {
-  "lastUpdated": "2026-03-21T22:28:22.523Z",
+  "lastUpdated": "2026-03-22T22:29:24.419Z",
   "rankings": {
     "1day": {
       "rising": [
         {
-          "sector": "AI・クラウド",
-          "change": 0
-        },
-        {
           "sector": "半導体",
-          "change": 0
+          "change": 0.00047268760501963927
         },
         {
           "sector": "EV・自動車",
@@ -22,16 +18,20 @@
         {
           "sector": "ヘルスケア・製薬",
           "change": 0
+        },
+        {
+          "sector": "エネルギー",
+          "change": 0
         }
       ],
       "falling": [
         {
-          "sector": "AI・クラウド",
-          "change": 0
+          "sector": "暗号資産・ブロックチェーン",
+          "change": -0.29022792401869457
         },
         {
-          "sector": "半導体",
-          "change": 0
+          "sector": "AI・クラウド",
+          "change": -0.007985284130288851
         },
         {
           "sector": "EV・自動車",
