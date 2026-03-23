@@ -1,11 +1,15 @@
 {
-  "lastUpdated": "2026-03-22T22:29:24.419Z",
+  "lastUpdated": "2026-03-23T22:36:11.897Z",
   "rankings": {
     "1day": {
       "rising": [
         {
+          "sector": "AI・クラウド",
+          "change": 0
+        },
+        {
           "sector": "半導体",
-          "change": 0.00047268760501963927
+          "change": 0
         },
         {
           "sector": "EV・自動車",
@@ -18,20 +22,16 @@
         {
           "sector": "ヘルスケア・製薬",
           "change": 0
-        },
-        {
-          "sector": "エネルギー",
-          "change": 0
         }
       ],
       "falling": [
         {
-          "sector": "暗号資産・ブロックチェーン",
-          "change": -0.29022792401869457
+          "sector": "AI・クラウド",
+          "change": 0
         },
         {
-          "sector": "AI・クラウド",
-          "change": -0.007985284130288851
+          "sector": "半導体",
+          "change": 0
         },
         {
           "sector": "EV・自動車",
@@ -50,92 +50,92 @@
     "1week": {
       "rising": [
         {
-          "sector": "金融",
-          "change": 0.31082850079431823
-        },
-        {
-          "sector": "エネルギー",
-          "change": -0.806011565538052
+          "sector": "AI・クラウド",
+          "change": 0
         },
         {
           "sector": "半導体",
-          "change": -1.3793638639993893
-        },
-        {
-          "sector": "通信・メディア",
-          "change": -1.6684559295505539
+          "change": 0
         },
         {
           "sector": "EV・自動車",
-          "change": -2.853890778556072
+          "change": 0
+        },
+        {
+          "sector": "金融",
+          "change": 0
+        },
+        {
+          "sector": "ヘルスケア・製薬",
+          "change": 0
         }
       ],
       "falling": [
         {
-          "sector": "教育テクノロジー",
-          "change": -13.777105463666157
-        },
-        {
-          "sector": "鉱山・資源",
-          "change": -11.143779552388258
-        },
-        {
-          "sector": "暗号資産・ブロックチェーン",
-          "change": -6.254895708362036
-        },
-        {
-          "sector": "量子コンピューティング",
-          "change": -5.963328675428121
-        },
-        {
           "sector": "AI・クラウド",
-          "change": -5.475300106863969
+          "change": 0
+        },
+        {
+          "sector": "半導体",
+          "change": 0
+        },
+        {
+          "sector": "EV・自動車",
+          "change": 0
+        },
+        {
+          "sector": "金融",
+          "change": 0
+        },
+        {
+          "sector": "ヘルスケア・製薬",
+          "change": 0
         }
       ]
     },
     "1month": {
       "rising": [
         {
-          "sector": "EV・自動車",
-          "change": 9.549331747224262
-        },
-        {
           "sector": "AI・クラウド",
-          "change": 3.572299831957844
+          "change": 0
         },
         {
-          "sector": "暗号資産・ブロックチェーン",
-          "change": 2.2433687598817973
+          "sector": "半導体",
+          "change": 0
         },
         {
-          "sector": "通信・メディア",
-          "change": 2.1421381401819057
+          "sector": "EV・自動車",
+          "change": 0
         },
         {
-          "sector": "エネルギー",
-          "change": -0.4004847365501589
+          "sector": "金融",
+          "change": 0
+        },
+        {
+          "sector": "ヘルスケア・製薬",
+          "change": 0
         }
       ],
       "falling": [
         {
-          "sector": "鉱山・資源",
-          "change": -19.94442744701905
+          "sector": "AI・クラウド",
+          "change": 0
         },
         {
-          "sector": "教育テクノロジー",
-          "change": -18.09454283248991
+          "sector": "半導体",
+          "change": 0
         },
         {
-          "sector": "バイオテクノロジー",
-          "change": -9.35127579849506
+          "sector": "EV・自動車",
+          "change": 0
+        },
+        {
+          "sector": "金融",
+          "change": 0
         },
         {
           "sector": "ヘルスケア・製薬",
-          "change": -7.393614520164444
-        },
-        {
-          "sector": "消費財・小売",
-          "change": -6.954860472954948
+          "change": 0
         }
       ]
     }
