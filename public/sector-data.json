@@ -1,141 +1,141 @@
 {
-  "lastUpdated": "2026-11-03T03:22:24.188Z",
+  "lastUpdated": "2026-11-04T01:58:17.919Z",
   "rankings": {
     "1day": {
       "rising": [
         {
-          "sector": "消費財・小売",
-          "change": 2.3978697033276144
+          "sector": "AI・クラウド",
+          "change": 0
         },
         {
-          "sector": "金融",
-          "change": 1.2481769654067425
-        },
-        {
-          "sector": "航空宇宙・防衛",
-          "change": 1.236904974081255
+          "sector": "半導体",
+          "change": 0
         },
         {
           "sector": "EV・自動車",
-          "change": 0.8908904355047703
+          "change": 0
         },
         {
-          "sector": "鉱山・資源",
-          "change": 0.4807486711552011
+          "sector": "金融",
+          "change": 0
+        },
+        {
+          "sector": "ヘルスケア・製薬",
+          "change": 0
         }
       ],
       "falling": [
         {
-          "sector": "量子コンピューティング",
-          "change": -5.620670205813455
-        },
-        {
-          "sector": "通信・メディア",
-          "change": -5.387547314319464
-        },
-        {
-          "sector": "暗号資産・ブロックチェーン",
-          "change": -5.093240720436211
+          "sector": "AI・クラウド",
+          "change": 0
         },
         {
           "sector": "半導体",
-          "change": -4.867455189244422
+          "change": 0
         },
         {
-          "sector": "エネルギー",
-          "change": -4.4417897710607
+          "sector": "EV・自動車",
+          "change": 0
+        },
+        {
+          "sector": "金融",
+          "change": 0
+        },
+        {
+          "sector": "ヘルスケア・製薬",
+          "change": 0
         }
       ]
     },
     "1week": {
       "rising": [
         {
-          "sector": "通信・メディア",
-          "change": 32.65794831898859
+          "sector": "AI・クラウド",
+          "change": 0
         },
         {
-          "sector": "バイオテクノロジー",
-          "change": 5.357421570750695
+          "sector": "半導体",
+          "change": 0
         },
         {
-          "sector": "ヘルスケア・製薬",
-          "change": 3.898447372220689
-        },
-        {
-          "sector": "消費財・小売",
-          "change": 3.694470226590925
+          "sector": "EV・自動車",
+          "change": 0
         },
         {
           "sector": "金融",
-          "change": 3.6092414972753275
+          "change": 0
+        },
+        {
+          "sector": "ヘルスケア・製薬",
+          "change": 0
         }
       ],
       "falling": [
         {
-          "sector": "半導体",
-          "change": -11.950368979968609
-        },
-        {
           "sector": "AI・クラウド",
-          "change": -11.587750456552106
+          "change": 0
         },
         {
-          "sector": "暗号資産・ブロックチェーン",
-          "change": -8.783278981927564
+          "sector": "半導体",
+          "change": 0
         },
         {
-          "sector": "量子コンピューティング",
-          "change": -8.126519504451439
+          "sector": "EV・自動車",
+          "change": 0
         },
         {
-          "sector": "教育テクノロジー",
-          "change": -4.6735222210416
+          "sector": "金融",
+          "change": 0
+        },
+        {
+          "sector": "ヘルスケア・製薬",
+          "change": 0
         }
       ]
     },
     "1month": {
       "rising": [
         {
-          "sector": "通信・メディア",
-          "change": 24.765605083339096
+          "sector": "AI・クラウド",
+          "change": 0
         },
         {
-          "sector": "消費財・小売",
-          "change": 13.283987679889943
+          "sector": "半導体",
+          "change": 0
         },
         {
-          "sector": "ヘルスケア・製薬",
-          "change": 12.745384402712808
-        },
-        {
-          "sector": "航空宇宙・防衛",
-          "change": 10.13927408819049
+          "sector": "EV・自動車",
+          "change": 0
         },
         {
           "sector": "金融",
-          "change": 3.9825224624008504
+          "change": 0
+        },
+        {
+          "sector": "ヘルスケア・製薬",
+          "change": 0
         }
       ],
       "falling": [
         {
-          "sector": "暗号資産・ブロックチェーン",
-          "change": -34.91533223229267
-        },
-        {
-          "sector": "量子コンピューティング",
-          "change": -25.072664624978266
+          "sector": "AI・クラウド",
+          "change": 0
         },
         {
           "sector": "半導体",
-          "change": -24.37384551199891
+          "change": 0
         },
         {
-          "sector": "AI・クラウド",
-          "change": -18.21747980631779
+          "sector": "EV・自動車",
+          "change": 0
         },
         {
-          "sector": "鉱山・資源",
-          "change": -12.689378758224358
+          "sector": "金融",
+          "change": 0
+        },
+        {
+          "sector": "ヘルスケア・製薬",
+          "change": 0
         }
       ]
     }
